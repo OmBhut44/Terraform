@@ -58,19 +58,26 @@ resource "aws_security_group" "my_security" {
 # ec2 instance
 
 resource "aws_instance" "my-instance" {
-    key_name = aws_key_pair.my_key.key_name
-    security_groups = [aws_security_group.my_security.name]
-    instance_type = var.ec2_instance_type
-    ami = var.ec2_ami_id # ubuntu us-east-2
-    user_data = file("install_nginx.sh")
     
+    for_each = tomap({
+        om-automate-instance-micro = "t2.micro"
+        om-automate-instance-medium = "t2.medium"
+    }) # meta argument to create multiple instances with different types
+
+    depends_on = [ aws_security_group.my_security, aws_key_pair.my_key ]
+
+    key_name = aws_key_pair.my_key.key_name
+    security_groups = [aws_security_group.my_security.name]    
+    instance_type = each.valueq
+    ami = var.ec2_ami_id # ubuntu us-east-2
+    user_data = file("install_nginx.sh") # script to run on instance creation
     root_block_device {
-        volume_size = var.ec2_root_storage_size
+        volume_size = var.env == "prd" ? 20 : var.ec2_default_root_storage_size
         volume_type = "gp3" # general purpose SSD
     }
 
     tags = {
-        Name = "om-automate-instance-beast"
+        Name = each.key
     }
   
 }
