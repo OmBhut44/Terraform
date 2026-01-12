@@ -68,7 +68,7 @@ resource "aws_instance" "my-instance" {
 
     key_name = aws_key_pair.my_key.key_name
     security_groups = [aws_security_group.my_security.name]    
-    instance_type = each.valueq
+    instance_type = each.value
     ami = var.ec2_ami_id # ubuntu us-east-2
     user_data = file("install_nginx.sh") # script to run on instance creation
     root_block_device {
