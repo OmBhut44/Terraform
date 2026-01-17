@@ -59,6 +59,8 @@ resource "aws_security_group" "my_security" {
 
 resource "aws_instance" "my-instance" {
     
+    # count = 2 # it will create 2 instance but with the same name 
+
     for_each = tomap({
         om-automate-instance-micro = "t2.micro"
         om-automate-instance-medium = "t2.medium"
@@ -67,9 +69,13 @@ resource "aws_instance" "my-instance" {
     depends_on = [ aws_security_group.my_security, aws_key_pair.my_key ]
 
     key_name = aws_key_pair.my_key.key_name
+
     security_groups = [aws_security_group.my_security.name]    
+    
     instance_type = each.value
+    
     ami = var.ec2_ami_id # ubuntu us-east-2
+
     user_data = file("install_nginx.sh") # script to run on instance creation
     root_block_device {
         volume_size = var.env == "prd" ? 20 : var.ec2_default_root_storage_size
@@ -81,3 +87,10 @@ resource "aws_instance" "my-instance" {
     }
   
 }
+
+# this is only when you want manually import existing resource into terraform state
+# we want to get the data of the resource which is manualy created outside of terraform [direct in aws] 
+# resource "aws_instance" "my_new_instance" {
+#     ami = "unknown" # invalid argument to demonstrate terraform plan error
+#     instance_type = "unknown"
+# }
